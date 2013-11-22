@@ -32,4 +32,15 @@ describe Conjur::API do
       api.create_queue id, options
     end
   end
+  
+  context "#queue" do
+    subject { api.queue id }
+
+    its(:url) { should == "http://localhost:5100/the-account/resources/queue/the/queue" }
+    
+    it 'propagates options' do
+      subject.options.keys.should include(:headers)
+      subject.options[:headers].keys.should include(:authorization)
+    end
+  end
 end

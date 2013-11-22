@@ -26,17 +26,18 @@ module Conjur
       provider = options[:provider] || :aws
       
       create_resource queue_resourceid(id), options
+      
       sender   = create_role queue_roleid(id, 'sender'), options
       receiver = create_role queue_roleid(id, 'receiver'), options
-      sender_credential   = create_variable [ id, 'credentials/sender' ].join('/'),   options.merge(kind: "#{provider}-identity", mime_type: 'application/json')
-      receiver_credential = create_variable [ id, 'credentials/receiver' ].join('/'), options.merge(kind: "#{provider}-identity", mime_type: 'application/json')
+      sender_credential   = create_variable 'application/json', "#{provider}-identity", options.merge(id: [ id, 'credentials/sender' ].join('/'))
+      receiver_credential = create_variable 'application/json', "#{provider}-identity", options.merge(id: [ id, 'credentials/receiver' ].join('/'))
       key_pair = create_key_pair options.merge(id: id)
 
-      sender_credential.resource.permit 'execute', sender.roleid
-      receiver_credential.resource.permit 'execute', receiver.roleid
+      sender_credential.resource.permit   :execute, sender.roleid
+      receiver_credential.resource.permit :execute, receiver.roleid
 
-      key_pair.add_member 'encrypt', sender
-      key_pair.add_member 'decrypt', receiver
+      key_pair.add_member 'encrypt', sender.roleid
+      key_pair.add_member 'decrypt', receiver.roleid
       
       queue(id)
     end

@@ -18,36 +18,38 @@
 # IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
-module Conjur
-  class Queue < Resource
-    def sender
-      queue_role('sender')
-    end
+require 'spec_helper'
 
-    def receiver
-      queue_role('receiver')
-    end
-    
-    def sender_credential
-      queue_variable('sender')
-    end
+describe Conjur::Queue do
+  let(:id) { 'the/queue' }
+  let(:url) { "http://localhost:5100/the-account/resources/queue/#{id}" }
+  let(:options) { { foo: 'bar' } }
+  let(:queue) { Conjur::Queue.new(url, options) }
+  let(:api) { double(:api) }
+  
+  subject { queue }
+  
+  before {
+    queue.stub(:api).and_return api
+  }
 
-    def receiver_credential
-      queue_variable('receiver')
-    end
+  before {
+    Conjur::Core::API.stub(:conjur_account).and_return 'the-account'
+  }
     
-    def key_pair
-      Conjur::KeyPair.new(Conjur::Core::API.host, self.options)["key_pairs/#{fully_escape(identifier)}"]
-    end
-    
-    protected
-    
-    def queue_role(name)
-      Conjur::Role.new(Conjur::Authz::API.host, self.options)[Conjur::API.parse_role_id("@queue:#{identifier}/#{name}").join('/')]
-    end
-
-    def queue_variable(name)
-      Conjur::Variable.new(Conjur::Core::API.host, self.options)["variables/#{fully_escape([ identifier, 'credentials', name ].join('/'))}"]
-    end
+  context "#sender" do
+    subject { queue.sender }
+    its(:class) { should == Conjur::Role }
+    its(:url) { should == "http://localhost:5100/the-account/roles/@queue/the/queue/sender" }
+  end
+  context "#sender_credential" do
+    subject { queue.sender_credential }
+    its(:class) { should == Conjur::Variable }
+    its(:url) { should == "http://localhost:5200/variables/the%2Fqueue%2Fcredentials%2Fsender" }
+  end
+  context "#key_pair" do
+    subject { queue.key_pair }
+    its(:class) { should == Conjur::KeyPair }
+    its(:url) { should == "http://localhost:5200/key_pairs/the%2Fqueue" }
   end
 end

@@ -21,7 +21,7 @@
 require 'aws'
 
 module Conjur
-  module Providers
+  module Provisioner
     module AWS
       def provision_queue(queue, options = {})
         iam = options[:iam] || AWS::IAM.new

@@ -36,7 +36,11 @@ module Conjur
         )
         receiver = iam.users.create('receiver', path: '/' + queue.id)
         receiver.policies['receive'] = AWS::IAM::Policy.new.allow(
-          actions: ['sqs:ReceiveMessage'],
+          actions: [
+            'sqs:ReceiveMessage',
+            'sqs:DeleteMessage',
+            'sqs:ChangeMessageVisibility'       
+          ],
           resources: aws_queue.arn
         )
         

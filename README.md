@@ -1,6 +1,15 @@
 # Conjur::Asset::Queue
 
-TODO: Write a gem description
+Implements secure queue communication. 
+
+A Queue is composed of:
+
+* **resource** a base resource
+* **sender** a role with permission to send to the queue
+* **receiver** a role with permission to receive from the queue
+* **sender_credential** a queue credential, executable by `sender`
+* **receiver_credential** a queue credential, executable by `receiver`
+* **key_pair** used by `sender` to encrypt (or sign) messages, and by `receiver` to decrypt/verify them.
 
 ## Installation
 

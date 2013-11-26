@@ -24,35 +24,32 @@ module Conjur
   module Provisioner
     module Queue
       module AWS
-        def provision(options = {})
-          iam = options[:iam] || ::AWS::IAM.new
-          sqs = options[:sqs] || ::AWS::SQS.new
+        def provision(queue, options = {})
+          iam = options[:iam] || AWS::IAM.new
+          sqs = options[:sqs] || AWS::SQS.new
           
-          sqs_queue = sqs.queues.create(self.identifier.gsub(/[^a-zA-Z0-9_\-]/, '-'))
+          aws_queue = sqs.queues.create(queue.id.gsub(/[^a-zA-Z0-9_\-]/, '-'))
           
-          sender = iam.users.create('sender', path: '/' + self.identifier)
-          sender.policies['send'] = {
-            "Statement" => [
-              "Effect" => "Allow",
-              "Action" => [ "sqs:SendMessage" ],
-              "Resource" => [ sqs_queue.arn ]
-            ]
-          }
-
-          receiver = iam.users.create('receiver', path: '/' + self.identifier)
-          receiver.policies['receive'] = {
-            "Statement" => [
-              "Effect" => "Allow",
-              "Action" => [ "sqs:ReceiveMessage", "sqs:DeleteMessage", "sqs:ChangeMessageVisibility" ],
-              "Resource" => [ sqs_queue.arn ]
-            ]
-          }
+          sender = iam.users.create('sender', path: '/' + queue.id)
+          sender.policies['send'] = AWS::IAM::Policy.new.allow(
+            actions: ['sqs:SendMessage'],
+            resources: aws_queue.arn
+          )
+          receiver = iam.users.create('receiver', path: '/' + queue.id)
+          receiver.policies['receive'] = AWS::IAM::Policy.new.allow(
+            actions: [
+              'sqs:ReceiveMessage',
+              'sqs:DeleteMessage',
+              'sqs:ChangeMessageVisibility'       
+            ],
+            resources: aws_queue.arn
+          )
           
           sender_access_key = sender.access_keys.create
-          self.sender_credential.add_value({ access_key_id: sender_access_key.id, secret_access_key: sender_access_key.secret }.to_json)
+          queue.sender_credential.add_value({ access_key_id: sender_access_key.id, secret_access_key: sender_access_key.secret }.to_json)
   
           receiver_access_key = receiver.access_keys.create
-          self.receiver_credential.add_value({ access_key_id: receiver_access_key.id, secret_access_key: receiver_access_key.secret }.to_json)
+          queue.receiver_credential.add_value({ access_key_id: receiver_access_key.id, secret_access_key: receiver_access_key.secret }.to_json)
         end
       end
     end

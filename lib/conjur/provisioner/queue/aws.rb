@@ -43,7 +43,7 @@ module Conjur
           receiver.policies['receive'] = {
             "Statement" => [
               "Effect" => "Allow",
-              "Action" => [ "sqs:ReceiveMessage" ],
+              "Action" => [ "sqs:ReceiveMessage", "sqs:DeleteMessage", "sqs:ChangeMessageVisibility" ],
               "Resource" => [ sqs_queue.arn ]
             ]
           }

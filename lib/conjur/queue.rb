@@ -20,6 +20,13 @@
 #
 module Conjur
   class Queue < Resource
+    
+    # The name (for example, as passed to aws queues.named) of this queue.
+    # Currently we get this directly from the asset identifier
+    def queue_name
+      identifier.gsub(/[^a-zA-Z0-9_\-]/, '-')
+    end
+    
     def sender
       queue_role('sender')
     end

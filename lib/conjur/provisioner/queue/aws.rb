@@ -28,7 +28,7 @@ module Conjur
           iam = options[:iam] || ::AWS::IAM.new
           sqs = options[:sqs] || ::AWS::SQS.new
           
-          sqs_queue = sqs.queues.create(self.identifier.gsub(/[^a-zA-Z0-9_\-]/, '-'))
+          sqs_queue = sqs.queues.create(self.queue_name)
           
           sender = iam.users.create('sender', path: '/' + self.identifier)
           sender.policies['send'] = {

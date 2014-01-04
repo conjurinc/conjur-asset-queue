@@ -29,24 +29,32 @@ module Conjur
           sqs = options[:sqs] || ::AWS::SQS.new
           
           sqs_queue = sqs.queues.create(self.queue_name)
+
+          info_policy = JSON.pretty_generate({
+            "Statement" => [
+              "Effect" => "Allow",
+              "Action" => [ "sqs:ListQueues", "sqs:GetQueueUrl" ],
+              "Resource" => [ "*" ]
+            ]
+          })
           
-          sender = iam.users.create('sender', path: '/' + self.identifier)
-          sender.policies['send'] = {
+          sender = iam.users.create("sys_#{self.identifier}-sender".parameterize, path: '/' + self.identifier + '/')
+          sender.policies['send'] = JSON.pretty_generate({
             "Statement" => [
               "Effect" => "Allow",
               "Action" => [ "sqs:SendMessage" ],
               "Resource" => [ sqs_queue.arn ]
-            ]
-          }
+            ]})
+          sender.policies['info'] = info_policy
           
-          receiver = iam.users.create('receiver', path: '/' + self.identifier)
-          receiver.policies['receive'] = {
+          receiver = iam.users.create("sys_#{self.identifier}-receiver".parameterize, path: '/' + self.identifier + '/')
+          receiver.policies['receive'] = JSON.pretty_generate({
             "Statement" => [
               "Effect" => "Allow",
               "Action" => [ "sqs:ReceiveMessage", "sqs:DeleteMessage", "sqs:ChangeMessageVisibility" ],
               "Resource" => [ sqs_queue.arn ]
-            ]
-          }
+            ]})
+          receiver.policies['info'] = info_policy
           
           sender_access_key = sender.access_keys.create
           self.sender_credential.add_value({ access_key_id: sender_access_key.id, secret_access_key: sender_access_key.secret }.to_json)

@@ -44,8 +44,9 @@ module Conjur
         #   using the queue asset's key pair.
         # @param [Hash] opts Options to pass as the second argument to send_message.
         def send_message body, opts={}
+          require 'base64'
           body = body.to_json unless body.kind_of?(String)
-          sqs_outbound_queue.send_message encrypt_message(body), opts
+          sqs_outbound_queue.send_message Base64.encode64(encrypt_message(body)), opts
         end
               
         # Decrypt a message received from our queue.

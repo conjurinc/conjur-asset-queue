@@ -43,6 +43,7 @@ module Conjur
     end
     
     def key_pair
+      require 'conjur-asset-key-pair'
       Conjur::KeyPair.new(Conjur::Core::API.host, self.options)["key_pairs/#{fully_escape(identifier)}"]
     end
     

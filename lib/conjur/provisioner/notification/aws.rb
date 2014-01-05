@@ -22,45 +22,33 @@ require 'aws'
 
 module Conjur
   module Provisioner
-    module Queue
+    module Notification
       module AWS
         def provision(options = {})
           iam = options[:iam] || ::AWS::IAM.new
-          sqs = options[:sqs] || ::AWS::SQS.new
+          sns = options[:sns] || ::AWS::SNS.new
           
-          sqs_queue = sqs.queues.create(self.queue_name)
+          sns_topic = sns.topics.create(self.topic_name)
 
           info_policy = JSON.pretty_generate({
             "Statement" => [
               "Effect" => "Allow",
-              "Action" => [ "sqs:ListQueues", "sqs:GetQueueUrl" ],
+              "Action" => [ "sns:ListTopics" ],
               "Resource" => [ "*" ]
             ]
           })
           
-          sender = iam.users.create("sys_queue_#{self.identifier}_sender".parameterize, path: '/' + self.identifier + '/')
+          sender = iam.users.create("sys_notification_#{self.identifier}_sender".parameterize, path: '/' + self.identifier + '/')
           sender.policies['send'] = JSON.pretty_generate({
             "Statement" => [
               "Effect" => "Allow",
-              "Action" => [ "sqs:SendMessage" ],
-              "Resource" => [ sqs_queue.arn ]
+              "Action" => [ "sns:Publish" ],
+              "Resource" => [ sns_topic.arn ]
             ]})
           sender.policies['info'] = info_policy
-          
-          receiver = iam.users.create("sys_queue_#{self.identifier}_receiver".parameterize, path: '/' + self.identifier + '/')
-          receiver.policies['receive'] = JSON.pretty_generate({
-            "Statement" => [
-              "Effect" => "Allow",
-              "Action" => [ "sqs:ReceiveMessage", "sqs:DeleteMessage", "sqs:ChangeMessageVisibility" ],
-              "Resource" => [ sqs_queue.arn ]
-            ]})
-          receiver.policies['info'] = info_policy
-          
+                    
           sender_access_key = sender.access_keys.create
           self.sender_credential.add_value({ access_key_id: sender_access_key.id, secret_access_key: sender_access_key.secret }.to_json)
-  
-          receiver_access_key = receiver.access_keys.create
-          self.receiver_credential.add_value({ access_key_id: receiver_access_key.id, secret_access_key: receiver_access_key.secret }.to_json)
         end
       end
     end

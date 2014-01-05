@@ -4,6 +4,13 @@ module Conjur
   module Provider
     module Queue
       module AWS
+        def self.included(base)
+          base.module_eval do
+            require 'conjur/provider/base/aws'
+            include Conjur::Provider::Base::AWS
+          end
+        end
+        
         # @return [AWS::SQS] SQS client with credentials from the queue asset's
         #   receiver identity (which has permission to receive/delete/hide messages)
         def sqs_receiver
@@ -23,7 +30,7 @@ module Conjur
           ivar(:sqs_inbound_queue){ sqs_receiver.queues.named queue_name }
         end
         
-        # @return [AWS::SQS::Queue] queue to which we send messages to ourself.  The
+        # @return [AWS::SQS::Queue] queue to which we send messages.  The
         #   difference between this and sqs_inbound_queue is that this queue is configured
         #   to use the sender AWS identity, while #sqs_inbound_queue uses the receiver
         #   identity.
@@ -31,7 +38,7 @@ module Conjur
           ivar(:sqs_outbound_queue){ sqs_sender.queues.named queue_name }
         end
         
-        # Sends an SQS message to ourself.
+        # Sends an SQS message to the outbound queue.
         # @param [*] body A string or value to send.  When not a string,
         #   it will be serialized as JSON.  This message will be encrypted
         #   using the queue asset's key pair.
@@ -55,18 +62,10 @@ module Conjur
         
         private      
         
-        # Returns an instance variable with the given name, using :create: to
-        # initialize it if it's not there.
-        def ivar name, &create
-          instance_variable_get("@#{name}") || instance_variable_set("@#{name}", instance_eval(&create))
-        end
-        
         # Create an SQS client using the specified credential
         # @param type [String,Symbol] :sender or :receiver
         def new_sqs_client type
-          variable = send(:"#{type}_credential")
-          identity = JSON.parse(variable.value).symbolize_keys
-          ::AWS::SQS.new identity
+          ::AWS::SQS.new aws_identity(type)
         end
       end
     end

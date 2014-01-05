@@ -29,8 +29,8 @@ module Conjur
       
       sender   = create_role queue_roleid(id, 'sender'), options
       receiver = create_role queue_roleid(id, 'receiver'), options
-      sender_credential   = create_variable 'application/json', "#{provider}-identity", options.merge(id: [ id, 'credentials/sender' ].join('/'))
-      receiver_credential = create_variable 'application/json', "#{provider}-identity", options.merge(id: [ id, 'credentials/receiver' ].join('/'))
+      sender_credential   = create_variable 'application/json', "#{provider}-identity", options.merge(id: [ 'queue', id, 'credentials/sender' ].join('/'))
+      receiver_credential = create_variable 'application/json', "#{provider}-identity", options.merge(id: [ 'queue', id, 'credentials/receiver' ].join('/'))
       key_pair = create_key_pair options.merge(id: id)
 
       sender_credential.resource.permit   :execute, sender.roleid

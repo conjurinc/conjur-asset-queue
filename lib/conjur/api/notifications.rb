@@ -18,13 +18,35 @@
 # IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
-class Conjur::API
-  class << self
-    def queue_asset_host
-      ENV["CONJUR_QUEUE_ASSET_URL"] || Conjur::Core::API.host
+require 'conjur/notification'
+
+module Conjur
+  class API
+    def create_notification(id, options = {})
+      provider = options[:provider] || :aws
+      
+      create_resource notification_resourceid(id), options
+      
+      sender   = create_role notification_roleid(id, 'sender'), options
+      sender_credential   = create_variable 'application/json', "#{provider}-identity", options.merge(id: [ 'notification', id, 'credentials/sender' ].join('/'))
+
+      sender_credential.resource.permit   :execute, sender.roleid
+
+      notification(id)
+    end
+    
+    def notification id
+      Conjur::Notification.new(resource(notification_resourceid(id)).url, credentials)
+    end
+    
+    protected
+    
+    def notification_resourceid(id)
+      [ Conjur::Core::API.conjur_account, 'notification', id ].join(':')
+    end
+
+    def notification_roleid(id, name)
+      [ Conjur::Core::API.conjur_account, '@notification', [ id, name ].join('/') ].join(':')
     end
   end
 end
-
-require 'conjur/api/queues'
-require 'conjur/api/notifications'

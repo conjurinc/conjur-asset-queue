@@ -20,7 +20,6 @@
 #
 module Conjur
   class Queue < Resource
-    
     # The name (for example, as passed to aws queues.named) of this queue.
     # Currently we get this directly from the asset identifier
     def queue_name
@@ -54,7 +53,7 @@ module Conjur
     end
 
     def queue_variable(name)
-      Conjur::Variable.new(Conjur::Core::API.host, self.options)["variables/#{fully_escape([ identifier, 'credentials', name ].join('/'))}"]
+      Conjur::Variable.new(Conjur::Core::API.host, self.options)["variables/#{fully_escape([ 'queue', identifier, 'credentials', name ].join('/'))}"]
     end
   end
 end

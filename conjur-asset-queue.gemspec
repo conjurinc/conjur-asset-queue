@@ -21,6 +21,8 @@ Gem::Specification.new do |spec|
   spec.add_dependency "conjur-api"
   spec.add_dependency "conjur-asset-key-pair-api"
 
+  spec.add_development_dependency "conjur-cli"
+  spec.add_development_dependency "conjur-asset-environment-api"
   spec.add_development_dependency "bundler", "~> 1.3"
   spec.add_development_dependency "rake"
   spec.add_development_dependency "aws-sdk"

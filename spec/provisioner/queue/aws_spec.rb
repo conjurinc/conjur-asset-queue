@@ -48,13 +48,15 @@ describe Conjur::Provisioner::Queue::AWS do
 
       iam.stub(:users).and_return users = double(:users)
       
-      users.should_receive(:create).with("sender", path: '/' + id).and_return sender = double(:user, policies: (sender_policies = double(:policies)))
-      sender_policies.should_receive(:[]=).with('send', an_instance_of(Hash)) do |name, policy|
-        JSON.parse(policy.to_json).should == {"Statement"=>[{"Effect"=>"Allow","Action"=>["sqs:SendMessage"],"Resource"=>["the-arn"]}]}
+      users.should_receive(:create).with("sys_queue_the-queue_sender", path: '/' + id + '/').and_return sender = double(:user, policies: (sender_policies = double(:policies)))
+      sender_policies.should_receive(:[]=).with('send', an_instance_of(String)) do |name, policy|
+        JSON.parse(policy).should == {"Statement"=>[{"Effect"=>"Allow","Action"=>["sqs:SendMessage"],"Resource"=>["the-arn"]}]}
       end
+      sender_policies.should_receive(:[]=).with('info', an_instance_of(String))
       
-      users.should_receive(:create).with("receiver", path: '/' + id).and_return receiver = double(:user, policies: (receiver_policies = double(:policies)))
-      receiver_policies.should_receive(:[]=).with('receive', an_instance_of(Hash))
+      users.should_receive(:create).with("sys_queue_the-queue_receiver", path: '/' + id + '/').and_return receiver = double(:user, policies: (receiver_policies = double(:policies)))
+      receiver_policies.should_receive(:[]=).with('receive', an_instance_of(String))
+      receiver_policies.should_receive(:[]=).with('info', an_instance_of(String))
 
       sender.stub_chain(:access_keys, :create).and_return double(:key, id: 'sender-key-id', secret: 'sender-key-secret')
       receiver.stub_chain(:access_keys, :create).and_return double(:key, id: 'receiver-key-id', secret: 'receiver-key-secret')

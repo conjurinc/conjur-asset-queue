@@ -45,7 +45,7 @@ describe Conjur::Queue do
   context "#sender_credential" do
     subject { queue.sender_credential }
     its(:class) { should == Conjur::Variable }
-    its(:url) { should == "http://localhost:5200/variables/the%2Fqueue%2Fcredentials%2Fsender" }
+    its(:url) { should == "http://localhost:5200/variables/queue%2Fthe%2Fqueue%2Fcredentials%2Fsender" }
   end
   context "#key_pair" do
     subject { queue.key_pair }

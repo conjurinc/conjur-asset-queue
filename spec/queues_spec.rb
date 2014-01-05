@@ -39,8 +39,8 @@ describe Conjur::API do
       api.should_receive(:create_resource).with('the-account:queue:the/queue', options)
       api.should_receive(:create_role).with('the-account:@queue:the/queue/sender', options).and_return double(:sender, roleid: 'sender-roleid')
       api.should_receive(:create_role).with('the-account:@queue:the/queue/receiver', options).and_return double(:receiver, roleid: 'receiver-roleid')
-      api.should_receive(:create_variable).with('application/json', 'aws-identity', options.merge(id: 'the/queue/credentials/sender')).and_return double(:sender_credential, resource: sender_credential_resource)
-      api.should_receive(:create_variable).with('application/json', 'aws-identity', options.merge(id: 'the/queue/credentials/receiver')).and_return double(:receiver_credential, resource: receiver_credential_resource)
+      api.should_receive(:create_variable).with('application/json', 'aws-identity', options.merge(id: 'queue/the/queue/credentials/sender')).and_return double(:sender_credential, resource: sender_credential_resource)
+      api.should_receive(:create_variable).with('application/json', 'aws-identity', options.merge(id: 'queue/the/queue/credentials/receiver')).and_return double(:receiver_credential, resource: receiver_credential_resource)
       api.should_receive(:create_key_pair).with(options.merge(id: 'the/queue')).and_return key_pair
       
       sender_credential_resource.should_receive(:permit).with(:execute, 'sender-roleid')

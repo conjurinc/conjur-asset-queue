@@ -18,13 +18,30 @@
 # IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
-class Conjur::API
-  class << self
-    def queue_asset_host
-      ENV["CONJUR_QUEUE_ASSET_URL"] || Conjur::Core::API.host
+module Conjur
+  class Notification < Resource
+    # The topic name of this notification.
+    # Currently we get this directly from the asset identifier
+    def topic_name
+      identifier.gsub(/[^a-zA-Z0-9_\-]/, '-')
+    end
+    
+    def sender
+      notification_role('sender')
+    end
+
+    def sender_credential
+      notification_variable('sender')
+    end
+    
+    protected
+    
+    def notification_role(name)
+      Conjur::Role.new(Conjur::Authz::API.host, self.options)[Conjur::API.parse_role_id("@notification:#{identifier}/#{name}").join('/')]
+    end
+
+    def notification_variable(name)
+      Conjur::Variable.new(Conjur::Core::API.host, self.options)["variables/#{fully_escape([ 'notification', identifier, 'credentials', name ].join('/'))}"]
     end
   end
 end
-
-require 'conjur/api/queues'
-require 'conjur/api/notifications'

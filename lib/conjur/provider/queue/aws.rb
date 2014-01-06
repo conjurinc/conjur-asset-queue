@@ -46,7 +46,7 @@ module Conjur
         def send_message body, opts={}
           require 'base64'
           body = body.to_json unless body.kind_of?(String)
-          sqs_outbound_queue.send_message Base64.encode64(encrypt_message(body)), opts
+          sqs_outbound_queue.send_message Base64.strict_encode64(encrypt_message(body)), opts
         end
               
         # Decrypt a message received from our queue.
